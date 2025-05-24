@@ -13,6 +13,22 @@ export async function onRequestGET(request: Request, env: Env): Promise<Response
     const url = new URL(request.url);
     const path = url.pathname;
     
+    // 获取监控设置
+    if (path.endsWith('/monitoring')) {
+      console.log('系统设置 - 获取监控设置');
+      const monitoringSettings = await getSettings(env.DB, 'monitoring');
+      
+      // 如果设置不存在，返回默认值
+      const settings = monitoringSettings || {
+        domain_monitoring_enabled: true,
+        domain_check_interval: 'daily',
+        cert_monitoring_enabled: true,
+        cert_check_interval: 'weekly'
+      };
+      
+      return createApiResponse(200, '获取成功', settings);
+    }
+    
     // 获取数据库备份
     if (path.endsWith('/backup')) {
       console.log('系统设置 - 获取数据库备份');
@@ -77,6 +93,30 @@ export async function onRequestPOST(request: Request, env: Env): Promise<Respons
     
     const url = new URL(request.url);
     const path = url.pathname;
+    
+    // 更新监控设置
+    if (path.endsWith('/monitoring')) {
+      console.log('系统设置 - 更新监控设置');
+      const body = await request.json();
+      console.log('系统设置 - 请求体:', JSON.stringify(body));
+      
+      // 更新监控设置
+      const result = await updateSettings(env.DB, 'monitoring', body);
+      
+      if (!result.success) {
+        return createErrorResponse(500, result.error || '更新监控设置失败');
+      }
+      
+      // 记录日志
+      await logSystem(
+        env.DB,
+        'info',
+        '更新监控设置',
+        'settings'
+      );
+      
+      return createApiResponse(200, '更新成功');
+    }
     
     // 恢复数据库备份
     if (path.endsWith('/restore')) {

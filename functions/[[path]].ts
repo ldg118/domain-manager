@@ -78,6 +78,12 @@ export async function onRequest(context) {
         const handler = module[`onRequest${request.method}`];
         return handler ? handler(request, env) : methodNotAllowed();
       });
+    } else if (path.startsWith('/api/settings')) {
+      // 系统设置相关请求
+      return await import('./api/settings').then(module => {
+        const handler = module[`onRequest${request.method}`];
+        return handler ? handler(request, env) : methodNotAllowed();
+      });
     } else if (path === '/api/check') {
       // 兼容参考仓库的API检查端点
       return handleApiCheck(request, env);
