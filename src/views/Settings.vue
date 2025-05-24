@@ -6,294 +6,250 @@
 
     <el-card class="settings-card">
       <el-tabs v-model="activeTab">
+        <!-- 通知设置 -->
         <el-tab-pane label="通知设置" name="notifications">
-          <div class="settings-section">
+          <el-form :model="notificationSettings" label-width="120px">
             <h3>Telegram 通知设置</h3>
-            <el-form :model="telegramForm" label-width="120px">
-              <el-form-item label="Bot Token">
-                <el-input v-model="telegramForm.botToken" placeholder="请输入 Telegram Bot Token" />
-              </el-form-item>
-              <el-form-item label="Chat ID">
-                <el-input v-model="telegramForm.chatId" placeholder="请输入 Telegram Chat ID" />
-              </el-form-item>
-              <el-form-item label="启用通知">
-                <el-switch v-model="telegramForm.enabled" />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="saveTelegramSettings">保存设置</el-button>
-                <el-button @click="testTelegramNotification">测试通知</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
+            <el-form-item label="Bot Token">
+              <el-input v-model="notificationSettings.tg_token" placeholder="请输入 Telegram Bot Token" />
+            </el-form-item>
+            <el-form-item label="用户 ID">
+              <el-input v-model="notificationSettings.tg_userid" placeholder="请输入 Telegram 用户 ID" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="testTelegramNotification">测试通知</el-button>
+            </el-form-item>
 
-          <el-divider />
-
-          <div class="settings-section">
             <h3>提醒设置</h3>
-            <el-form :model="reminderForm" label-width="200px">
-              <el-form-item label="域名到期提前提醒天数">
-                <el-select
-                  v-model="reminderForm.domainExpiryDays"
-                  multiple
-                  placeholder="选择提醒天数"
-                  style="width: 100%"
-                >
-                  <el-option label="7天" :value="7" />
-                  <el-option label="15天" :value="15" />
-                  <el-option label="30天" :value="30" />
-                  <el-option label="60天" :value="60" />
-                  <el-option label="90天" :value="90" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="SSL证书到期提前提醒天数">
-                <el-select
-                  v-model="reminderForm.certificateExpiryDays"
-                  multiple
-                  placeholder="选择提醒天数"
-                  style="width: 100%"
-                >
-                  <el-option label="7天" :value="7" />
-                  <el-option label="15天" :value="15" />
-                  <el-option label="30天" :value="30" />
-                  <el-option label="60天" :value="60" />
-                </el-select>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="saveReminderSettings">保存设置</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
+            <el-form-item label="提前提醒天数">
+              <el-input-number v-model="notificationSettings.days" :min="1" :max="90" />
+            </el-form-item>
+            <el-form-item label="启用域名到期提醒">
+              <el-switch v-model="notificationSettings.domain_expiry_enabled" />
+            </el-form-item>
+            <el-form-item label="启用证书到期提醒">
+              <el-switch v-model="notificationSettings.cert_expiry_enabled" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="saveNotificationSettings">保存设置</el-button>
+            </el-form-item>
+          </el-form>
         </el-tab-pane>
 
+        <!-- 监控设置 -->
         <el-tab-pane label="监控设置" name="monitoring">
-          <div class="settings-section">
-            <h3>域名监控设置</h3>
-            <el-form :model="monitoringForm" label-width="120px">
-              <el-form-item label="启用域名监控">
-                <el-switch v-model="monitoringForm.domainMonitoringEnabled" />
-              </el-form-item>
-              <el-form-item label="监控频率">
-                <el-select v-model="monitoringForm.domainMonitoringInterval" placeholder="选择监控频率" style="width: 100%">
-                  <el-option label="每天" value="daily" />
-                  <el-option label="每周" value="weekly" />
-                  <el-option label="每月" value="monthly" />
-                </el-select>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="saveMonitoringSettings">保存设置</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
+          <el-form :model="monitoringSettings" label-width="120px">
+            <h3>域名监控</h3>
+            <el-form-item label="启用域名监控">
+              <el-switch v-model="monitoringSettings.domain_monitoring_enabled" />
+            </el-form-item>
+            <el-form-item label="监控频率">
+              <el-select v-model="monitoringSettings.domain_check_interval" placeholder="选择监控频率">
+                <el-option label="每小时" value="hourly" />
+                <el-option label="每天" value="daily" />
+                <el-option label="每周" value="weekly" />
+              </el-select>
+            </el-form-item>
 
-          <el-divider />
-
-          <div class="settings-section">
-            <h3>SSL证书监控设置</h3>
-            <el-form :model="monitoringForm" label-width="120px">
-              <el-form-item label="启用证书监控">
-                <el-switch v-model="monitoringForm.certificateMonitoringEnabled" />
-              </el-form-item>
-              <el-form-item label="监控频率">
-                <el-select v-model="monitoringForm.certificateMonitoringInterval" placeholder="选择监控频率" style="width: 100%">
-                  <el-option label="每天" value="daily" />
-                  <el-option label="每周" value="weekly" />
-                  <el-option label="每月" value="monthly" />
-                </el-select>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="saveMonitoringSettings">保存设置</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
+            <h3>证书监控</h3>
+            <el-form-item label="启用证书监控">
+              <el-switch v-model="monitoringSettings.cert_monitoring_enabled" />
+            </el-form-item>
+            <el-form-item label="监控频率">
+              <el-select v-model="monitoringSettings.cert_check_interval" placeholder="选择监控频率">
+                <el-option label="每天" value="daily" />
+                <el-option label="每周" value="weekly" />
+                <el-option label="每月" value="monthly" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="saveMonitoringSettings">保存设置</el-button>
+            </el-form-item>
+          </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="账户设置" name="account">
-          <div class="settings-section">
-            <h3>修改密码</h3>
-            <el-form :model="passwordForm" label-width="120px" :rules="passwordRules" ref="passwordFormRef">
-              <el-form-item label="当前密码" prop="currentPassword">
-                <el-input v-model="passwordForm.currentPassword" type="password" placeholder="请输入当前密码" />
-              </el-form-item>
-              <el-form-item label="新密码" prop="newPassword">
-                <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
-              </el-form-item>
-              <el-form-item label="确认新密码" prop="confirmPassword">
-                <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="changePassword">修改密码</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
+        <!-- 数据库设置 -->
+        <el-tab-pane label="数据库管理" name="database">
+          <el-form label-width="120px">
+            <h3>数据库备份</h3>
+            <el-form-item>
+              <el-button type="primary" @click="backupDatabase">创建备份</el-button>
+              <el-button @click="showRestoreDialog">恢复备份</el-button>
+            </el-form-item>
+
+            <h3>数据库维护</h3>
+            <el-form-item>
+              <el-button type="warning" @click="optimizeDatabase">优化数据库</el-button>
+              <el-button type="danger" @click="confirmResetDatabase">重置数据库</el-button>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <!-- 用户管理 -->
+        <el-tab-pane label="用户管理" name="users">
+          <el-form label-width="120px">
+            <h3>多用户协作</h3>
+            <p>本系统已设置为手动配置模式，无需用户认证。如需启用多用户协作，请联系系统管理员。</p>
+          </el-form>
+        </el-tab-pane>
+
+        <!-- 系统日志 -->
+        <el-tab-pane label="系统日志" name="logs">
+          <el-form label-width="120px">
+            <h3>操作日志</h3>
+            <el-form-item>
+              <el-button @click="fetchSystemLogs">刷新日志</el-button>
+              <el-button type="danger" @click="clearSystemLogs">清除日志</el-button>
+            </el-form-item>
+            <el-table :data="systemLogs" style="width: 100%" v-loading="logsLoading">
+              <el-table-column prop="timestamp" label="时间" width="180" />
+              <el-table-column prop="level" label="级别" width="100">
+                <template #default="scope">
+                  <el-tag :type="getLogLevelType(scope.row.level)">{{ scope.row.level }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="message" label="消息" />
+              <el-table-column prop="source" label="来源" width="150" />
+            </el-table>
+          </el-form>
         </el-tab-pane>
       </el-tabs>
     </el-card>
+
+    <!-- 恢复备份对话框 -->
+    <el-dialog title="恢复数据库备份" v-model="restoreDialogVisible" width="500px">
+      <el-upload
+        class="upload-demo"
+        drag
+        action="#"
+        :auto-upload="false"
+        :on-change="handleBackupFileChange"
+        :limit="1"
+        accept=".json,.sql"
+      >
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">
+          拖拽备份文件到此处，或 <em>点击上传</em>
+        </div>
+        <template #tip>
+          <div class="el-upload__tip">
+            请上传之前导出的数据库备份文件
+          </div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="restoreDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="restoreDatabase">恢复</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-// 导入全局 axios 实例
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 import axiosInstance from '../utils/axios'
 
 // 当前激活的标签页
 const activeTab = ref('notifications')
 
-// Telegram 设置表单
-const telegramForm = ref({
-  botToken: '',
-  chatId: '',
-  enabled: false
+// 通知设置
+const notificationSettings = ref({
+  tg_token: '',
+  tg_userid: '',
+  days: 30,
+  domain_expiry_enabled: true,
+  cert_expiry_enabled: true
 })
 
-// 提醒设置表单
-const reminderForm = ref({
-  domainExpiryDays: [30, 15, 7],
-  certificateExpiryDays: [30, 15, 7]
+// 监控设置
+const monitoringSettings = ref({
+  domain_monitoring_enabled: true,
+  domain_check_interval: 'daily',
+  cert_monitoring_enabled: true,
+  cert_check_interval: 'weekly'
 })
 
-// 监控设置表单
-const monitoringForm = ref({
-  domainMonitoringEnabled: true,
-  domainMonitoringInterval: 'daily',
-  certificateMonitoringEnabled: true,
-  certificateMonitoringInterval: 'daily'
-})
+// 系统日志
+const systemLogs = ref([])
+const logsLoading = ref(false)
 
-// 密码修改表单
-const passwordForm = ref({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
+// 恢复备份对话框
+const restoreDialogVisible = ref(false)
+const backupFile = ref(null)
 
-// 密码表单验证规则
-const passwordRules = {
-  currentPassword: [
-    { required: true, message: '请输入当前密码', trigger: 'blur' }
-  ],
-  newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请再次输入新密码', trigger: 'blur' },
-    {
-      validator: (rule, value, callback) => {
-        if (value !== passwordForm.value.newPassword) {
-          callback(new Error('两次输入的密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
+// 获取通知设置
+const fetchNotificationSettings = async () => {
+  try {
+    const response = await axiosInstance.get('/api/monitor/config')
+    
+    if (response.data.status === 200) {
+      const config = response.data.data || {}
+      notificationSettings.value = {
+        tg_token: config.tg_token || '',
+        tg_userid: config.tg_userid || '',
+        days: config.days || 30,
+        domain_expiry_enabled: config.domain_expiry_enabled !== false,
+        cert_expiry_enabled: config.cert_expiry_enabled !== false
+      }
+    } else {
+      ElMessage.error(response.data.message || '获取通知设置失败')
     }
-  ]
+  } catch (error) {
+    console.error('获取通知设置失败:', error)
+    ElMessage.error('获取通知设置失败')
+  }
 }
 
-// 表单引用
-const passwordFormRef = ref(null)
-
-// 获取设置
-const fetchSettings = async () => {
+// 获取监控设置
+const fetchMonitoringSettings = async () => {
   try {
-    // 使用全局 axios 实例，自动携带 token
-    const response = await axiosInstance.get('/api/settings')
-
+    const response = await axiosInstance.get('/api/settings/monitoring')
+    
     if (response.data.status === 200) {
       const settings = response.data.data || {}
-      
-      // 填充 Telegram 设置
-      if (settings.telegram) {
-        telegramForm.value.botToken = settings.telegram.botToken || ''
-        telegramForm.value.chatId = settings.telegram.chatId || ''
-        telegramForm.value.enabled = settings.telegram.enabled || false
-      }
-      
-      // 填充提醒设置
-      if (settings.reminders) {
-        reminderForm.value.domainExpiryDays = settings.reminders.domainExpiryDays || [30, 15, 7]
-        reminderForm.value.certificateExpiryDays = settings.reminders.certificateExpiryDays || [30, 15, 7]
-      }
-      
-      // 填充监控设置
-      if (settings.monitoring) {
-        monitoringForm.value.domainMonitoringEnabled = settings.monitoring.domainMonitoringEnabled !== false
-        monitoringForm.value.domainMonitoringInterval = settings.monitoring.domainMonitoringInterval || 'daily'
-        monitoringForm.value.certificateMonitoringEnabled = settings.monitoring.certificateMonitoringEnabled !== false
-        monitoringForm.value.certificateMonitoringInterval = settings.monitoring.certificateMonitoringInterval || 'daily'
+      monitoringSettings.value = {
+        domain_monitoring_enabled: settings.domain_monitoring_enabled !== false,
+        domain_check_interval: settings.domain_check_interval || 'daily',
+        cert_monitoring_enabled: settings.cert_monitoring_enabled !== false,
+        cert_check_interval: settings.cert_check_interval || 'weekly'
       }
     } else {
-      ElMessage.error(response.data.message || '获取设置失败')
+      console.error('获取监控设置失败:', response.data.message)
     }
   } catch (error) {
-    console.error('获取设置失败:', error)
-    ElMessage.error('获取设置失败')
+    console.error('获取监控设置失败:', error)
   }
 }
 
-// 保存 Telegram 设置
-const saveTelegramSettings = async () => {
+// 保存通知设置
+const saveNotificationSettings = async () => {
   try {
-    // 使用全局 axios 实例，自动携带 token
-    const response = await axiosInstance.post('/api/settings/telegram', telegramForm.value)
-
+    const response = await axiosInstance.post('/api/monitor/config', notificationSettings.value)
+    
     if (response.data.status === 200) {
-      ElMessage.success('Telegram 设置保存成功')
+      ElMessage.success('通知设置保存成功')
     } else {
-      ElMessage.error(response.data.message || 'Telegram 设置保存失败')
+      ElMessage.error(response.data.message || '保存通知设置失败')
     }
   } catch (error) {
-    console.error('保存 Telegram 设置失败:', error)
-    ElMessage.error('保存 Telegram 设置失败')
-  }
-}
-
-// 测试 Telegram 通知
-const testTelegramNotification = async () => {
-  try {
-    // 使用全局 axios 实例，自动携带 token
-    const response = await axiosInstance.post('/api/settings/telegram/test', {})
-
-    if (response.data.status === 200) {
-      ElMessage.success('测试通知已发送，请检查您的 Telegram')
-    } else {
-      ElMessage.error(response.data.message || '测试通知发送失败')
-    }
-  } catch (error) {
-    console.error('发送测试通知失败:', error)
-    ElMessage.error('发送测试通知失败')
-  }
-}
-
-// 保存提醒设置
-const saveReminderSettings = async () => {
-  try {
-    // 使用全局 axios 实例，自动携带 token
-    const response = await axiosInstance.post('/api/settings/reminders', reminderForm.value)
-
-    if (response.data.status === 200) {
-      ElMessage.success('提醒设置保存成功')
-    } else {
-      ElMessage.error(response.data.message || '提醒设置保存失败')
-    }
-  } catch (error) {
-    console.error('保存提醒设置失败:', error)
-    ElMessage.error('保存提醒设置失败')
+    console.error('保存通知设置失败:', error)
+    ElMessage.error('保存通知设置失败')
   }
 }
 
 // 保存监控设置
 const saveMonitoringSettings = async () => {
   try {
-    // 使用全局 axios 实例，自动携带 token
-    const response = await axiosInstance.post('/api/settings/monitoring', monitoringForm.value)
-
+    const response = await axiosInstance.post('/api/settings/monitoring', monitoringSettings.value)
+    
     if (response.data.status === 200) {
       ElMessage.success('监控设置保存成功')
     } else {
-      ElMessage.error(response.data.message || '监控设置保存失败')
+      ElMessage.error(response.data.message || '保存监控设置失败')
     }
   } catch (error) {
     console.error('保存监控设置失败:', error)
@@ -301,38 +257,232 @@ const saveMonitoringSettings = async () => {
   }
 }
 
-// 修改密码
-const changePassword = async () => {
-  if (!passwordFormRef.value) return
+// 测试 Telegram 通知
+const testTelegramNotification = async () => {
+  if (!notificationSettings.value.tg_token || !notificationSettings.value.tg_userid) {
+    ElMessage.warning('请先填写 Telegram Bot Token 和用户 ID')
+    return
+  }
+  
+  try {
+    const response = await axiosInstance.post('/api/monitor/test-telegram', {
+      token: notificationSettings.value.tg_token,
+      chat_id: notificationSettings.value.tg_userid
+    })
+    
+    if (response.data.status === 200) {
+      ElMessage.success('Telegram 通知测试成功')
+    } else {
+      ElMessage.error(response.data.message || 'Telegram 通知测试失败')
+    }
+  } catch (error) {
+    console.error('Telegram 通知测试失败:', error)
+    ElMessage.error('Telegram 通知测试失败')
+  }
+}
 
-  passwordFormRef.value.validate(async (valid) => {
-    if (valid) {
+// 备份数据库
+const backupDatabase = async () => {
+  try {
+    const response = await axiosInstance.get('/api/settings/backup')
+    
+    if (response.data.status === 200) {
+      // 创建下载链接
+      const dataStr = JSON.stringify(response.data.data, null, 2)
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+      
+      const exportFileDefaultName = `domain_manager_backup_${new Date().toISOString().split('T')[0]}.json`
+      
+      const linkElement = document.createElement('a')
+      linkElement.setAttribute('href', dataUri)
+      linkElement.setAttribute('download', exportFileDefaultName)
+      linkElement.click()
+      
+      ElMessage.success('数据库备份成功')
+    } else {
+      ElMessage.error(response.data.message || '数据库备份失败')
+    }
+  } catch (error) {
+    console.error('数据库备份失败:', error)
+    ElMessage.error('数据库备份失败')
+  }
+}
+
+// 显示恢复备份对话框
+const showRestoreDialog = () => {
+  backupFile.value = null
+  restoreDialogVisible.value = true
+}
+
+// 处理备份文件变更
+const handleBackupFileChange = (file) => {
+  backupFile.value = file.raw
+}
+
+// 恢复数据库
+const restoreDatabase = async () => {
+  if (!backupFile.value) {
+    ElMessage.warning('请选择要恢复的备份文件')
+    return
+  }
+
+  try {
+    const reader = new FileReader()
+    reader.onload = async (e) => {
       try {
-        // 使用全局 axios 实例，自动携带 token
-        const response = await axiosInstance.post('/api/auth/change-password', {
-          currentPassword: passwordForm.value.currentPassword,
-          newPassword: passwordForm.value.newPassword
+        const backup = JSON.parse(e.target.result)
+        
+        // 确认恢复
+        ElMessageBox.confirm(
+          '恢复数据库将覆盖当前所有数据，确定要继续吗？',
+          '警告',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        ).then(async () => {
+          try {
+            const response = await axiosInstance.post('/api/settings/restore', { backup })
+            
+            if (response.data.status === 200) {
+              ElMessage.success('数据库恢复成功')
+              restoreDialogVisible.value = false
+              // 刷新页面以反映恢复的数据
+              setTimeout(() => {
+                window.location.reload()
+              }, 1500)
+            } else {
+              ElMessage.error(response.data.message || '数据库恢复失败')
+            }
+          } catch (error) {
+            console.error('数据库恢复失败:', error)
+            ElMessage.error('数据库恢复失败')
+          }
+        }).catch(() => {
+          // 取消恢复
         })
-
-        if (response.data.status === 200) {
-          ElMessage.success('密码修改成功')
-          // 清空表单
-          passwordForm.value.currentPassword = ''
-          passwordForm.value.newPassword = ''
-          passwordForm.value.confirmPassword = ''
-        } else {
-          ElMessage.error(response.data.message || '密码修改失败')
-        }
       } catch (error) {
-        console.error('修改密码失败:', error)
-        ElMessage.error('修改密码失败')
+        console.error('解析备份文件失败:', error)
+        ElMessage.error('解析备份文件失败，请确保文件格式正确')
       }
     }
+    reader.readAsText(backupFile.value)
+  } catch (error) {
+    console.error('读取备份文件失败:', error)
+    ElMessage.error('读取备份文件失败')
+  }
+}
+
+// 优化数据库
+const optimizeDatabase = async () => {
+  try {
+    const response = await axiosInstance.post('/api/settings/optimize')
+    
+    if (response.data.status === 200) {
+      ElMessage.success('数据库优化成功')
+    } else {
+      ElMessage.error(response.data.message || '数据库优化失败')
+    }
+  } catch (error) {
+    console.error('数据库优化失败:', error)
+    ElMessage.error('数据库优化失败')
+  }
+}
+
+// 确认重置数据库
+const confirmResetDatabase = () => {
+  ElMessageBox.confirm(
+    '重置数据库将删除所有数据并恢复到初始状态，此操作不可逆，确定要继续吗？',
+    '危险操作',
+    {
+      confirmButtonText: '确定重置',
+      cancelButtonText: '取消',
+      type: 'danger'
+    }
+  ).then(() => {
+    resetDatabase()
+  }).catch(() => {
+    // 取消重置
   })
 }
 
+// 重置数据库
+const resetDatabase = async () => {
+  try {
+    const response = await axiosInstance.post('/api/settings/reset')
+    
+    if (response.data.status === 200) {
+      ElMessage.success('数据库重置成功')
+      // 刷新页面以反映重置后的状态
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } else {
+      ElMessage.error(response.data.message || '数据库重置失败')
+    }
+  } catch (error) {
+    console.error('数据库重置失败:', error)
+    ElMessage.error('数据库重置失败')
+  }
+}
+
+// 获取系统日志
+const fetchSystemLogs = async () => {
+  logsLoading.value = true
+  try {
+    const response = await axiosInstance.get('/api/settings/logs')
+    
+    if (response.data.status === 200) {
+      systemLogs.value = response.data.data || []
+    } else {
+      ElMessage.error(response.data.message || '获取系统日志失败')
+    }
+  } catch (error) {
+    console.error('获取系统日志失败:', error)
+    ElMessage.error('获取系统日志失败')
+  } finally {
+    logsLoading.value = false
+  }
+}
+
+// 清除系统日志
+const clearSystemLogs = async () => {
+  try {
+    const response = await axiosInstance.delete('/api/settings/logs')
+    
+    if (response.data.status === 200) {
+      ElMessage.success('系统日志清除成功')
+      systemLogs.value = []
+    } else {
+      ElMessage.error(response.data.message || '清除系统日志失败')
+    }
+  } catch (error) {
+    console.error('清除系统日志失败:', error)
+    ElMessage.error('清除系统日志失败')
+  }
+}
+
+// 获取日志级别对应的标签类型
+const getLogLevelType = (level) => {
+  switch (level.toLowerCase()) {
+    case 'error':
+      return 'danger'
+    case 'warning':
+      return 'warning'
+    case 'info':
+      return 'info'
+    case 'debug':
+      return ''
+    default:
+      return ''
+  }
+}
+
 onMounted(() => {
-  fetchSettings()
+  fetchNotificationSettings()
+  fetchMonitoringSettings()
+  fetchSystemLogs()
 })
 </script>
 
@@ -349,12 +499,12 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-.settings-section {
-  margin-bottom: 20px;
-}
-
-.settings-section h3 {
-  margin-bottom: 20px;
+h3 {
+  margin-top: 20px;
+  margin-bottom: 15px;
   font-weight: 500;
+  color: #303133;
+  border-bottom: 1px solid #ebeef5;
+  padding-bottom: 10px;
 }
 </style>

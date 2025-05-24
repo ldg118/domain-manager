@@ -1,7 +1,7 @@
 // 监控 API 端点
 // 处理域名和证书的监控、检查等操作
 
-import { extractApiToken, validateApiToken, createApiResponse, createErrorResponse } from '../utils/auth';
+import { createApiResponse, createErrorResponse } from '../utils/auth';
 import { getAllDomains, updateDomain, getAlertConfig, updateAlertConfig } from '../utils/db';
 import { getAllCertificates, updateCertificate } from '../utils/db';
 import { sendDomainExpiryNotification, sendCertificateExpiryNotification, testTelegramConfig } from '../utils/telegram';
@@ -9,12 +9,6 @@ import { getExpiringDomains } from '../utils/db';
 import { getExpiringCertificates, checkDomainSSL } from '../utils/ssl';
 
 export async function onRequestGET(request: Request, env: Env): Promise<Response> {
-  // 验证API令牌
-  const token = extractApiToken(request);
-  if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-    return createErrorResponse(401, '未授权访问');
-  }
-
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -55,12 +49,6 @@ export async function onRequestGET(request: Request, env: Env): Promise<Response
 export const onRequestGet = onRequestGET;
 
 export async function onRequestPOST(request: Request, env: Env): Promise<Response> {
-  // 验证API令牌
-  const token = extractApiToken(request);
-  if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-    return createErrorResponse(401, '未授权访问');
-  }
-
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -310,7 +298,7 @@ export async function onRequestOPTIONS(): Promise<Response> {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400'
     }
   });

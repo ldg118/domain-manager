@@ -1,22 +1,13 @@
 // 域名管理 API 端点
 // 处理域名的增删改查等操作
 
-import { extractApiToken, validateApiToken, createApiResponse, createErrorResponse } from '../utils/auth';
+import { createApiResponse, createErrorResponse } from '../utils/auth';
 import { getAllDomains, getDomainById, addDomain, updateDomain, deleteDomain, getExpiringDomains } from '../utils/db';
 
 export async function onRequestGET(request: Request, env: Env): Promise<Response> {
   try {
     console.log('域名管理 - GET请求开始处理', request.url);
     
-    // 验证API令牌
-    const token = extractApiToken(request);
-    console.log('域名管理 - 提取到的令牌:', token);
-    
-    if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-      console.log('域名管理 - 令牌验证失败');
-      return createErrorResponse(401, '未授权访问');
-    }
-
     const url = new URL(request.url);
     const path = url.pathname;
     const id = path.split('/').pop();
@@ -63,18 +54,6 @@ export const onRequestGet = onRequestGET;
 export async function onRequestPOST(request: Request, env: Env): Promise<Response> {
   try {
     console.log('域名管理 - POST请求开始处理');
-    
-    // 验证API令牌
-    const token = extractApiToken(request);
-    console.log('域名管理 - 提取到的令牌:', token);
-    
-    // 调试模式：始终允许DEBUG_TOKEN通过
-    if (token === 'DEBUG_TOKEN') {
-      console.log('域名管理 - 使用调试令牌，跳过验证');
-    } else if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-      console.log('域名管理 - 令牌验证失败');
-      return createErrorResponse(401, '未授权访问');
-    }
 
     // 解析请求体
     const body = await request.json() as Domain;
@@ -109,18 +88,6 @@ export const onRequestPost = onRequestPOST;
 export async function onRequestPUT(request: Request, env: Env): Promise<Response> {
   try {
     console.log('域名管理 - PUT请求开始处理');
-    
-    // 验证API令牌
-    const token = extractApiToken(request);
-    console.log('域名管理 - 提取到的令牌:', token);
-    
-    // 调试模式：始终允许DEBUG_TOKEN通过
-    if (token === 'DEBUG_TOKEN') {
-      console.log('域名管理 - 使用调试令牌，跳过验证');
-    } else if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-      console.log('域名管理 - 令牌验证失败');
-      return createErrorResponse(401, '未授权访问');
-    }
 
     const url = new URL(request.url);
     const path = url.pathname;
@@ -170,18 +137,6 @@ export const onRequestPut = onRequestPUT;
 export async function onRequestDELETE(request: Request, env: Env): Promise<Response> {
   try {
     console.log('域名管理 - DELETE请求开始处理');
-    
-    // 验证API令牌
-    const token = extractApiToken(request);
-    console.log('域名管理 - 提取到的令牌:', token);
-    
-    // 调试模式：始终允许DEBUG_TOKEN通过
-    if (token === 'DEBUG_TOKEN') {
-      console.log('域名管理 - 使用调试令牌，跳过验证');
-    } else if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-      console.log('域名管理 - 令牌验证失败');
-      return createErrorResponse(401, '未授权访问');
-    }
 
     const url = new URL(request.url);
     const path = url.pathname;
@@ -231,7 +186,7 @@ export async function onRequestOPTIONS(): Promise<Response> {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Token',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400'
     }
   });

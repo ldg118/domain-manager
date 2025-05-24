@@ -1,7 +1,7 @@
 <template>
   <div class="certificates-container">
     <div class="page-header">
-      <h2>SSL证书管理</h2>
+      <h2>证书管理</h2>
       <div class="header-actions">
         <el-button type="primary" @click="showAddCertificateDialog">添加证书</el-button>
         <el-button type="success" @click="showImportDialog">导入</el-button>
@@ -12,29 +12,20 @@
     <!-- 证书列表 -->
     <el-card class="certificate-list">
       <el-table :data="certificates" style="width: 100%" v-loading="loading">
-        <el-table-column prop="domain" label="域名" min-width="150" />
+        <el-table-column prop="common_name" label="通用名称" min-width="150" />
         <el-table-column prop="issuer" label="颁发机构" min-width="120" />
-        <el-table-column prop="expiry_date" label="到期日期" min-width="120" />
+        <el-table-column prop="valid_from" label="生效日期" min-width="120" />
+        <el-table-column prop="valid_to" label="到期日期" min-width="120" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">
-              {{ scope.row.status }}
+            <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
+              {{ scope.row.status === 'valid' ? '有效' : '过期' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="auto_renew" label="自动续期" width="100">
-          <template #default="scope">
-            <el-switch
-              v-model="scope.row.auto_renew"
-              @change="updateAutoRenew(scope.row)"
-              :disabled="loading"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="showEditCertificateDialog(scope.row)">编辑</el-button>
-            <el-button size="small" type="success" @click="renewCertificate(scope.row)">续期</el-button>
             <el-button size="small" type="danger" @click="confirmDeleteCertificate(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -48,21 +39,25 @@
       width="500px"
     >
       <el-form :model="certificateForm" label-width="100px" :rules="rules" ref="certificateFormRef">
-        <el-form-item label="域名" prop="domain">
-          <el-input v-model="certificateForm.domain" placeholder="请输入域名" />
+        <el-form-item label="通用名称" prop="common_name">
+          <el-input v-model="certificateForm.common_name" placeholder="请输入通用名称" />
         </el-form-item>
         <el-form-item label="颁发机构">
-          <el-select v-model="certificateForm.issuer" placeholder="请选择颁发机构" style="width: 100%">
-            <el-option label="Let's Encrypt" value="Let's Encrypt" />
-            <el-option label="Cloudflare" value="Cloudflare" />
-            <el-option label="DigiCert" value="DigiCert" />
-            <el-option label="GoDaddy" value="GoDaddy" />
-            <el-option label="其他" value="其他" />
-          </el-select>
+          <el-input v-model="certificateForm.issuer" placeholder="请输入颁发机构" />
         </el-form-item>
-        <el-form-item label="到期日期" prop="expiry_date">
+        <el-form-item label="生效日期">
           <el-date-picker
-            v-model="certificateForm.expiry_date"
+            v-model="certificateForm.valid_from"
+            type="date"
+            placeholder="选择生效日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="到期日期" prop="valid_to">
+          <el-date-picker
+            v-model="certificateForm.valid_to"
             type="date"
             placeholder="选择到期日期"
             format="YYYY-MM-DD"
@@ -70,8 +65,15 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="自动续期">
-          <el-switch v-model="certificateForm.auto_renew" />
+        <el-form-item label="关联域名">
+          <el-select v-model="certificateForm.domain_id" placeholder="选择关联域名" clearable style="width: 100%">
+            <el-option
+              v-for="domain in domains"
+              :key="domain.id"
+              :label="domain.domain"
+              :value="domain.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注">
           <el-input
@@ -124,11 +126,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 // 导入全局 axios 实例
 import axiosInstance from '../utils/axios'
 
 // 证书列表
 const certificates = ref([])
+const domains = ref([])
 const loading = ref(false)
 
 // 对话框控制
@@ -142,21 +146,20 @@ const certificateFormRef = ref(null)
 // 证书表单
 const certificateForm = ref({
   id: null,
-  domain: '',
-  issuer: 'Let\'s Encrypt',
-  expiry_date: '',
-  auto_renew: true,
-  status: '有效',
+  common_name: '',
+  issuer: '',
+  valid_from: '',
+  valid_to: '',
+  domain_id: null,
   memo: ''
 })
 
 // 表单验证规则
 const rules = {
-  domain: [
-    { required: true, message: '请输入域名', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$/, message: '请输入有效的域名', trigger: 'blur' }
+  common_name: [
+    { required: true, message: '请输入通用名称', trigger: 'blur' }
   ],
-  expiry_date: [
+  valid_to: [
     { required: true, message: '请选择到期日期', trigger: 'change' }
   ]
 }
@@ -164,25 +167,10 @@ const rules = {
 // 导入文件
 const importFile = ref(null)
 
-// 获取状态类型
-const getStatusType = (status) => {
-  switch (status) {
-    case '有效':
-      return 'success'
-    case '即将过期':
-      return 'warning'
-    case '已过期':
-      return 'danger'
-    default:
-      return 'info'
-  }
-}
-
 // 获取证书列表
 const fetchCertificates = async () => {
   loading.value = true
   try {
-    // 使用全局 axios 实例，自动携带 token
     const response = await axiosInstance.get('/api/certificates')
 
     if (response.data.status === 200) {
@@ -198,16 +186,31 @@ const fetchCertificates = async () => {
   }
 }
 
+// 获取域名列表（用于关联）
+const fetchDomains = async () => {
+  try {
+    const response = await axiosInstance.get('/api/domains')
+
+    if (response.data.status === 200) {
+      domains.value = response.data.data || []
+    } else {
+      console.error('获取域名列表失败:', response.data.message)
+    }
+  } catch (error) {
+    console.error('获取域名列表失败:', error)
+  }
+}
+
 // 显示添加证书对话框
 const showAddCertificateDialog = () => {
   isEdit.value = false
   certificateForm.value = {
     id: null,
-    domain: '',
-    issuer: 'Let\'s Encrypt',
-    expiry_date: '',
-    auto_renew: true,
-    status: '有效',
+    common_name: '',
+    issuer: '',
+    valid_from: '',
+    valid_to: '',
+    domain_id: null,
     memo: ''
   }
   certificateDialogVisible.value = true
@@ -237,7 +240,7 @@ const submitCertificateForm = async () => {
           response = await axiosInstance.post('/api/certificates', certificateForm.value)
         }
 
-        if (response.data.status === 200) {
+        if (response.data.status === 200 || response.data.status === 201) {
           ElMessage.success(isEdit.value ? '证书更新成功' : '证书添加成功')
           certificateDialogVisible.value = false
           fetchCertificates()
@@ -255,7 +258,7 @@ const submitCertificateForm = async () => {
 // 确认删除证书
 const confirmDeleteCertificate = (row) => {
   ElMessageBox.confirm(
-    `确定要删除域名 ${row.domain} 的证书吗？`,
+    `确定要删除证书 ${row.common_name} 吗？`,
     '警告',
     {
       confirmButtonText: '确定',
@@ -283,48 +286,6 @@ const deleteCertificate = async (id) => {
   } catch (error) {
     console.error('删除证书失败:', error)
     ElMessage.error('删除证书失败')
-  }
-}
-
-// 更新自动续期状态
-const updateAutoRenew = async (row) => {
-  try {
-    const response = await axiosInstance.put(`/api/certificates/${row.id}/auto-renew`, {
-      auto_renew: row.auto_renew
-    })
-
-    if (response.data.status === 200) {
-      ElMessage.success(`自动续期已${row.auto_renew ? '开启' : '关闭'}`)
-    } else {
-      ElMessage.error(response.data.message || '更新自动续期状态失败')
-      // 恢复原状态
-      row.auto_renew = !row.auto_renew
-    }
-  } catch (error) {
-    console.error('更新自动续期状态失败:', error)
-    ElMessage.error('更新自动续期状态失败')
-    // 恢复原状态
-    row.auto_renew = !row.auto_renew
-  }
-}
-
-// 续期证书
-const renewCertificate = async (row) => {
-  try {
-    const response = await axiosInstance.post(`/api/certificates/${row.id}/renew`, {})
-
-    if (response.data.status === 200) {
-      ElMessage.success('证书续期请求已提交，请稍后查看结果')
-      // 延迟刷新列表，等待续期完成
-      setTimeout(() => {
-        fetchCertificates()
-      }, 3000)
-    } else {
-      ElMessage.error(response.data.message || '证书续期失败')
-    }
-  } catch (error) {
-    console.error('证书续期失败:', error)
-    ElMessage.error('证书续期失败')
   }
 }
 
@@ -407,6 +368,7 @@ const exportCertificates = async () => {
 
 onMounted(() => {
   fetchCertificates()
+  fetchDomains()
 })
 </script>
 

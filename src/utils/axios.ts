@@ -15,34 +15,11 @@ const instance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    // 从 localStorage 获取 token
-    const token = localStorage.getItem('token');
-    
-    // 如果存在 token，则添加到请求头（多种方式确保兼容性）
-    if (token) {
-      // 标准 Authorization Bearer 头
-      config.headers['Authorization'] = `Bearer ${token}`;
-      
-      // 添加自定义头，确保兼容性
-      config.headers['X-API-Token'] = token;
-      
-      // 添加 URL 参数
-      if (config.url && !config.url.includes('?')) {
-        config.url = `${config.url}?token=${token}`;
-      } else if (config.url) {
-        config.url = `${config.url}&token=${token}`;
-      }
-      
-      // 添加调试信息
-      console.log('请求拦截器 - 添加令牌到请求:', {
-        url: config.url,
-        headers: config.headers,
-        token: token
-      });
-    } else {
-      console.log('请求拦截器 - 未找到令牌');
-    }
-    
+    // 无需添加任何token或授权信息，系统已改为无授权模式
+    console.log('请求拦截器 - 发送请求:', {
+      url: config.url,
+      method: config.method
+    });
     return config;
   },
   error => {
@@ -70,15 +47,6 @@ instance.interceptors.response.use(
     
     if (error.response) {
       switch (error.response.status) {
-        case 401:
-          // 未授权，清除 token 并跳转到登录页面
-          ElMessage.error('登录已过期，请重新登录');
-          localStorage.removeItem('token');
-          router.push('/login');
-          break;
-        case 403:
-          ElMessage.error('没有权限访问此资源');
-          break;
         case 404:
           ElMessage.error('请求的资源不存在');
           break;
@@ -94,16 +62,5 @@ instance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// 添加调试模式令牌
-export function enableDebugMode() {
-  localStorage.setItem('token', 'DEBUG_TOKEN');
-  console.log('已启用调试模式，使用特殊令牌');
-}
-
-// 检查是否已登录
-export function isLoggedIn() {
-  return !!localStorage.getItem('token');
-}
 
 export default instance;

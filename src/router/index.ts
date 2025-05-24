@@ -30,22 +30,14 @@ const router = createRouter({
       ]
     },
     {
-      path: '/login',
-      name: 'Login',
+      path: '/welcome',
+      name: 'Welcome',
       component: () => import('../views/Login.vue')
     }
   ]
 })
 
-// 路由守卫
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-  
-  if (to.path !== '/login' && !token) {
-    next('/login')
-  } else {
-    next()
-  }
-})
+// 移除所有路由守卫，实现无认证直接访问
+// 无需任何token校验和跳转限制
 
 export default router

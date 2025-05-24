@@ -1,43 +1,25 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
+  <div class="welcome-container">
+    <div class="welcome-card">
+      <div class="welcome-header">
         <h2>域名管理系统</h2>
-        <p>登录您的账户</p>
+        <p>欢迎使用域名管理系统</p>
       </div>
       
-      <el-form :model="loginForm" :rules="rules" ref="loginFormRef" class="login-form">
-        <el-form-item prop="username">
-          <el-input 
-            v-model="loginForm.username" 
-            placeholder="用户名" 
-            prefix-icon="el-icon-user"
-          />
-        </el-form-item>
+      <div class="welcome-content">
+        <p>本系统已采用手动配置模式，无需登录即可使用所有功能。</p>
+        <p>点击下方按钮直接进入系统。</p>
         
-        <el-form-item prop="password">
-          <el-input 
-            v-model="loginForm.password" 
-            type="password" 
-            placeholder="密码" 
-            prefix-icon="el-icon-lock"
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-        
-        <el-form-item>
-          <el-button 
-            type="primary" 
-            :loading="loading" 
-            class="login-button" 
-            @click="handleLogin"
-          >
-            登录
-          </el-button>
-        </el-form-item>
-      </el-form>
+        <el-button 
+          type="primary" 
+          class="enter-button" 
+          @click="enterSystem"
+        >
+          进入系统
+        </el-button>
+      </div>
       
-      <div class="login-footer">
+      <div class="welcome-footer">
         <p>© {{ new Date().getFullYear() }} 域名管理系统</p>
       </div>
     </div>
@@ -45,67 +27,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
-const loading = ref(false)
-const loginFormRef = ref(null)
 
-const loginForm = ref({
-  username: '',
-  password: ''
-})
-
-const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
-}
-
-const handleLogin = async () => {
-  if (!loginFormRef.value) return
-  
-  await loginFormRef.value.validate(async (valid) => {
-    if (!valid) return
-    
-    loading.value = true
-    
-    try {
-      const response = await axios.post('/api/auth/login', {
-        username: loginForm.value.username,
-        password: loginForm.value.password
-      })
-      
-      if (response.data.status === 200) {
-        // 保存令牌
-        localStorage.setItem('token', response.data.data.token)
-        
-        // 显示成功消息
-        ElMessage.success('登录成功')
-        
-        // 跳转到首页
-        router.push('/')
-      } else {
-        ElMessage.error(response.data.message || '登录失败')
-      }
-    } catch (error) {
-      console.error('登录失败:', error)
-      ElMessage.error('登录失败，请检查用户名和密码')
-    } finally {
-      loading.value = false
-    }
-  })
+const enterSystem = () => {
+  ElMessage.success('欢迎使用域名管理系统')
+  router.push('/')
 }
 </script>
 
 <style scoped>
-.login-container {
+.welcome-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -113,7 +47,7 @@ const handleLogin = async () => {
   background-color: #f5f7fa;
 }
 
-.login-card {
+.welcome-card {
   width: 400px;
   padding: 40px;
   background-color: #fff;
@@ -121,30 +55,32 @@ const handleLogin = async () => {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.login-header {
+.welcome-header {
   text-align: center;
   margin-bottom: 30px;
 }
 
-.login-header h2 {
+.welcome-header h2 {
   margin-bottom: 10px;
   font-weight: 500;
   color: #303133;
 }
 
-.login-header p {
+.welcome-header p {
   color: #909399;
 }
 
-.login-form {
-  margin-bottom: 20px;
+.welcome-content {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
-.login-button {
+.enter-button {
   width: 100%;
+  margin-top: 20px;
 }
 
-.login-footer {
+.welcome-footer {
   text-align: center;
   color: #909399;
   font-size: 12px;

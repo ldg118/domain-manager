@@ -1,7 +1,8 @@
 // 认证 API 端点
 // 处理用户登录、注册等认证相关请求
+// 注意：已移除所有授权检查，实现无授权访问
 
-import { authenticateUser, createApiResponse, createErrorResponse, extractApiToken, validateApiToken } from '../utils/auth';
+import { authenticateUser, createApiResponse, createErrorResponse } from '../utils/auth';
 import { getUserByUsername, createUser } from '../utils/db';
 
 export async function onRequestPOST(request: Request, env: Env): Promise<Response> {
@@ -49,7 +50,6 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
     if (authResult.authenticated) {
       // 数据库认证成功
       return createApiResponse(200, '登录成功', {
-        token: env.API_TOKEN || 'default_token',
         username: authResult.user?.username,
         isAdmin: authResult.user?.is_admin === 1
       });
@@ -60,7 +60,6 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
     if (body.username === (env.USER || '') && body.password === (env.PASS || '')) {
       // 环境变量认证成功
       return createApiResponse(200, '登录成功', {
-        token: env.API_TOKEN || 'default_token',
         username: body.username,
         isAdmin: true
       });
@@ -117,15 +116,10 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
 
 /**
  * 处理修改密码请求
+ * 注意：已移除授权检查，任何人都可以修改密码
  */
 async function handleChangePassword(request: Request, env: Env): Promise<Response> {
   try {
-    // 验证API令牌
-    const token = extractApiToken(request);
-    if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-      return createErrorResponse(401, '未授权访问');
-    }
-    
     // 解析请求体
     const body = await request.json() as { currentPassword: string; newPassword: string; username?: string };
     
@@ -173,7 +167,7 @@ export async function onRequestOPTIONS(): Promise<Response> {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400'
     }
   });
