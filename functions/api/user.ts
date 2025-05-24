@@ -1,18 +1,14 @@
 // 用户 API 端点
 // 处理用户相关请求，如修改密码等
 
-import { extractApiToken, validateApiToken, createApiResponse, createErrorResponse } from '../utils/auth';
+import { createApiResponse, createErrorResponse } from '../utils/auth';
 import { getUserByUsername } from '../utils/db';
 
 export async function onRequestPost(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   
-  // 验证API令牌
-  const token = extractApiToken(request);
-  if (!token || !validateApiToken(token, env.API_TOKEN || 'default_token')) {
-    return createErrorResponse(401, '未授权访问');
-  }
+  // 无需验证API令牌，已移除授权限制
   
   // 处理修改密码请求
   if (path.endsWith('/change-password')) {
