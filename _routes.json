@@ -1,0 +1,23 @@
+// Cloudflare Pages 路由配置
+// 确保前端路由在刷新时不会404
+
+// 创建 _routes.json 文件，告诉 Cloudflare Pages 如何处理路由
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": ["/api/*", "/assets/*", "/_worker.js"],
+  "routes": [
+    {
+      "src": "^/api/.*",
+      "dest": "/_worker.js"
+    },
+    {
+      "src": "^/assets/.*",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "^/.*",
+      "dest": "/index.html"
+    }
+  ]
+}
